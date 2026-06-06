@@ -31,7 +31,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start
+// Start only if running locally (Vercel will import the app instead)
 const start = async () => {
   await connectDB();
   app.listen(PORT, () => {
@@ -39,4 +39,12 @@ const start = async () => {
   });
 };
 
-start();
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  start();
+} else {
+  // We still need to connect to the DB for Vercel Serverless function executions
+  connectDB().catch(console.error);
+}
+
+// Export the express app so Vercel can run it as a serverless function
+export default app;
