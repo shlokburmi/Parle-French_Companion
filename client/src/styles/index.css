@@ -1,26 +1,26 @@
 /* ═══════════════════════════════════════════
-   PARISIAN INK — Design System
+   NEON GLASS — Design System
    ═══════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500&display=swap');
 
 :root {
-  --bg:        #0e0e0e;
-  --card:      #161616;
-  --card-alt:  #1c1c1c;
-  --cream:     #f0e6c8;
-  --gold:      #c9a84c;
-  --gold-dim:  #a07e2e;
-  --red:       #d94040;
-  --red-glow:  rgba(217, 64, 64, .45);
-  --amber:     #e8a030;
-  --green:     #4caf7a;
-  --muted:     #8a8272;
-  --muted-dim: #5a5549;
-  --serif:     'Playfair Display', Georgia, serif;
-  --mono:      'DM Mono', 'Courier New', monospace;
-  --ease:      cubic-bezier(.4, 0, .2, 1);
-  --radius:    12px;
+  --bg:        #0a0b10;
+  --card:      rgba(20, 22, 35, 0.65);
+  --card-alt:  rgba(30, 34, 55, 0.7);
+  --cream:     #e2e8f0;
+  --gold:      #00f0ff;
+  --gold-dim:  #0077ff;
+  --red:       #ff0055;
+  --red-glow:  rgba(255, 0, 85, 0.45);
+  --amber:     #ffb800;
+  --green:     #00ff88;
+  --muted:     #8a94a6;
+  --muted-dim: #4b5563;
+  --serif:     'Outfit', system-ui, sans-serif;
+  --mono:      'Space Grotesk', monospace;
+  --ease:      cubic-bezier(0.16, 1, 0.3, 1);
+  --radius:    16px;
   --max-w:     480px;
 }
 
