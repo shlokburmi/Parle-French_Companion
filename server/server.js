@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
-import geminiRoutes from './routes/gemini.js';
+import geminiRoutes from './routes/api.js';
 import sessionRoutes from './routes/sessions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
