@@ -6,7 +6,7 @@ const FALLBACK_WORDS = ['bonjour', 'merci', 'café', "aujourd'hui", 'livre', 'bo
 export default function ScanLearn({ onStartConversation, showToast }) {
   const [words, setWords] = useState([]);
   const [previewSrc, setPreviewSrc] = useState('');
-  const [ocrProgress, setOcrProgress] = useState(-1); // -1 = hidden
+  const [ocrProgress, setOcrProgress] = useState(-1);
   const [ready, setReady] = useState(false);
   const fileRef = useRef(null);
   const [dragover, setDragover] = useState(false);
@@ -22,18 +22,15 @@ export default function ScanLearn({ onStartConversation, showToast }) {
       return;
     }
 
-    // Preview
     const reader = new FileReader();
     reader.onload = (e) => setPreviewSrc(e.target.result);
     reader.readAsDataURL(file);
 
-    // OCR
     setOcrProgress(0);
     setWords([]);
     setReady(false);
 
     try {
-      // Dynamically load Tesseract.js if not already loaded
       if (!window.Tesseract) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
@@ -57,7 +54,6 @@ export default function ScanLearn({ onStartConversation, showToast }) {
 
       setOcrProgress(100);
 
-      // Extract words
       const raw = text
         .replace(/[^a-zA-ZÀ-ÿ\s'-]/g, ' ')
         .split(/\s+/)
@@ -92,54 +88,75 @@ export default function ScanLearn({ onStartConversation, showToast }) {
   };
 
   return (
-    <>
+    <div className="screen-container">
       <h2 className="section-title">Scan &amp; Learn</h2>
-      <p className="section-sub">Upload an image containing French text to begin</p>
+      <p className="section-sub" style={{ maxWidth: '400px', margin: '0 auto 40px' }}>
+        Transform any real-world French text into an interactive lesson. Upload a menu, a page, or a sign.
+      </p>
 
-      <div
-        className={`drop-zone${dragover ? ' dragover' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
-        onDragLeave={() => setDragover(false)}
-        onDrop={handleDrop}
-        onClick={() => fileRef.current?.click()}
-      >
-        <div className="drop-icon">📸</div>
-        <p className="drop-text">
-          Drag &amp; drop an image here<br />
-          or <strong>click to browse</strong>
-        </p>
-        <input
-          type="file"
-          ref={fileRef}
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={(e) => e.target.files.length && handleFile(e.target.files[0])}
-        />
-        {previewSrc && <img className="image-preview" src={previewSrc} alt="Uploaded preview" />}
+      <div className="upload-modal" style={{ position: 'relative' }}>
+        {/* Background floating pills effect if we have words */}
+        {words.length > 0 && (
+          <div style={{ position: 'absolute', inset: -80, zIndex: -1, pointerEvents: 'none', opacity: 0.5 }}>
+            <div className="words-container" style={{ justifyContent: 'center' }}>
+              {words.map((w, i) => (
+                <WordPill key={w + i} word={w} index={i} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div
+          className={`drop-zone${dragover ? ' dragover' : ''}`}
+          style={{ border: 'none', padding: 0 }}
+          onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
+          onDragLeave={() => setDragover(false)}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current?.click()}
+        >
+          <div className="drop-icon-bg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+              <path d="M12 12v9"></path>
+              <path d="m16 16-4-4-4 4"></path>
+            </svg>
+          </div>
+          <p style={{ fontFamily: 'var(--serif)', fontSize: '1.4rem', color: 'var(--cream)', marginBottom: '8px' }}>
+            Drop image here
+          </p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+            or click to browse your device
+          </p>
+          
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
+            {['JPG', 'PNG', 'PDF'].map(ext => (
+              <span key={ext} style={{ fontSize: '0.7rem', padding: '4px 10px', background: 'rgba(240,230,200,0.05)', borderRadius: '100px', color: 'var(--muted)', fontWeight: 600 }}>
+                {ext}
+              </span>
+            ))}
+          </div>
+
+          <input
+            type="file"
+            ref={fileRef}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => e.target.files.length && handleFile(e.target.files[0])}
+          />
+        </div>
       </div>
 
-      {ocrProgress >= 0 && (
-        <div className="ocr-progress-wrap">
-          <p className="label"><span className="spinner"></span>Scanning with Tesseract…</p>
-          <div className="ocr-progress-bar">
-            <div className="fill" style={{ width: `${ocrProgress}%` }} />
-          </div>
-        </div>
-      )}
-
-      {words.length > 0 && (
-        <div className="words-container">
-          {words.map((w, i) => (
-            <WordPill key={w + i} word={w} index={i} />
-          ))}
+      {ocrProgress >= 0 && ocrProgress < 100 && (
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>Scanning with Tesseract... {ocrProgress}%</p>
         </div>
       )}
 
       {ready && (
         <button className="btn-primary" onClick={handleStart}>
-          Start Conversation
+          Start Conversation &rarr;
         </button>
       )}
-    </>
+    </div>
   );
 }

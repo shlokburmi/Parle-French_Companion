@@ -9,8 +9,8 @@ const router = Router();
    ──────────────────────────────────────────── */
 router.post('/', async (req, res) => {
   try {
-    const { words, rounds, averageScore } = req.body;
-    const session = await Session.create({ words, rounds, averageScore });
+    const { words, rounds, averageScore, vocabGained } = req.body;
+    const session = await Session.create({ words, rounds, averageScore, vocabGained });
     res.status(201).json(session);
   } catch (err) {
     console.error('[sessions/create]', err.message);

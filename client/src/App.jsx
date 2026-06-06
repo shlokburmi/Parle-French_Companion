@@ -1,72 +1,142 @@
-import { useState, useCallback } from 'react';
-import Brand from './components/Brand';
+import { useState, useCallback, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Toast, { useToast } from './components/Toast';
+import Sidebar from './components/Sidebar';
+import Landing from './screens/Landing';
 import ScanLearn from './screens/ScanLearn';
 import Conversation from './screens/Conversation';
 import SessionSummary from './screens/SessionSummary';
+import Placeholders from './screens/Placeholders';
 
 export default function App() {
   const { toasts, showToast } = useToast();
-  const [screen, setScreen] = useState('scan');  // 'scan' | 'convo' | 'summary'
+  const navigate = useNavigate();
+  
+  // App State
+  const [user, setUser] = useState(null);
+  const [appScreen, setAppScreen] = useState('scan'); // 'scan' | 'convo' | 'summary'
   const [words, setWords] = useState([]);
   const [results, setResults] = useState([]);
 
+  // Check for existing token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
+  const handleLoginSuccess = async (credentialResponse) => {
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialResponse.credential })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+        showToast('Successfully signed in!');
+        navigate('/');
+      } else {
+        showToast('Login failed: ' + data.error);
+      }
+    } catch (err) {
+      showToast('Error connecting to server.');
+    }
+  };
+
+  const handleLoginError = () => {
+    showToast('Google Sign-In failed.');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setAppScreen('scan');
+    navigate('/');
+  };
+
   const handleStartConversation = useCallback((scannedWords) => {
     setWords(scannedWords);
-    setScreen('convo');
+    setAppScreen('convo');
   }, []);
 
   const handleConversationComplete = useCallback((roundResults) => {
     setResults(roundResults);
-    setScreen('summary');
+    setAppScreen('summary');
   }, []);
 
   const handleRestart = useCallback(() => {
     setResults([]);
-    setScreen('convo');
+    setAppScreen('convo');
   }, []);
 
   const handleNewWords = useCallback(() => {
     setWords([]);
     setResults([]);
-    setScreen('scan');
+    setAppScreen('scan');
   }, []);
+
+  // Main Home App Flow Component
+  const HomeAppFlow = () => {
+    return (
+      <div className="main-content">
+        {appScreen === 'scan' && (
+          <ScanLearn onStartConversation={handleStartConversation} showToast={showToast} />
+        )}
+        {appScreen === 'convo' && (
+          <Conversation
+            key={results.length} // Force remount if starting over completely
+            words={words}
+            showToast={showToast}
+            onComplete={handleConversationComplete}
+          />
+        )}
+        {appScreen === 'summary' && (
+          <SessionSummary
+            results={results}
+            words={words}
+            showToast={showToast}
+            onRestart={handleRestart}
+            onNewWords={handleNewWords}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
       <Toast toasts={toasts} />
-      <div id="app">
-        <Brand />
-
-        <div className={`screen${screen === 'scan' ? ' active' : ''}`}>
-          {(screen === 'scan') && (
-            <ScanLearn onStartConversation={handleStartConversation} showToast={showToast} />
-          )}
+      
+      {/* If not logged in, show Landing page full screen */}
+      {!user ? (
+        <Landing onLoginSuccess={handleLoginSuccess} onLoginError={handleLoginError} />
+      ) : (
+        /* Authenticated Layout with Sidebar */
+        <div className="app-layout">
+          <Sidebar user={user} onLogout={handleLogout} />
+          
+          <div className="main-content" style={{ padding: 0 }}>
+            <Routes>
+              <Route path="/" element={<HomeAppFlow />} />
+              <Route path="/progress" element={<Placeholders title="My Progress" />} />
+              <Route path="/grammar" element={<Placeholders title="Grammar Library" />} />
+              <Route path="/audio" element={<Placeholders title="Audio Immersion" />} />
+            </Routes>
+          </div>
         </div>
-
-        <div className={`screen${screen === 'convo' ? ' active' : ''}`}>
-          {(screen === 'convo') && (
-            <Conversation
-              key={results.length}
-              words={words}
-              showToast={showToast}
-              onComplete={handleConversationComplete}
-            />
-          )}
-        </div>
-
-        <div className={`screen${screen === 'summary' ? ' active' : ''}`}>
-          {(screen === 'summary') && (
-            <SessionSummary
-              results={results}
-              words={words}
-              showToast={showToast}
-              onRestart={handleRestart}
-              onNewWords={handleNewWords}
-            />
-          )}
-        </div>
-      </div>
+      )}
     </>
   );
 }

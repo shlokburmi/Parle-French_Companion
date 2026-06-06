@@ -5,7 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import geminiRoutes from './routes/api.js';
-import sessionRoutes from './routes/sessions.js';
+import authRoutes from './routes/auth.js';
+import sessionsRoutes from './routes/sessions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,8 +22,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/gemini', geminiRoutes);
-app.use('/api/sessions', sessionRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/ai', geminiRoutes);
+app.use('/api/sessions', sessionsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
