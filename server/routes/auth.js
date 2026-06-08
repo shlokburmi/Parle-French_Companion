@@ -47,7 +47,11 @@ router.post('/google', async (req, res) => {
     res.json({ token, user });
   } catch (error) {
     console.error('[auth/google]', error);
-    res.status(401).json({ error: 'Authentication failed' });
+    res.status(401).json({
+      error: 'Authentication failed: ' + error.message,
+      stack: error.stack,
+      google_client_id_configured: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 15) + '...' : 'none'
+    });
   }
 });
 
