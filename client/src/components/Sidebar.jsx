@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, TrendingUp, BookOpen, Headphones, Settings, LogOut } from 'lucide-react';
+import { Home, TrendingUp, BookOpen, Headphones, Settings, LogOut, MessageSquare } from 'lucide-react';
 
 export default function Sidebar({ user, onLogout }) {
   return (
@@ -26,11 +26,14 @@ export default function Sidebar({ user, onLogout }) {
         <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
           <Home /> Home
         </NavLink>
+        <NavLink to="/chat" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <MessageSquare /> AI Tutor Chat
+        </NavLink>
         <NavLink to="/progress" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <TrendingUp /> My Progress
         </NavLink>
         <NavLink to="/grammar" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <BookOpen /> Grammar Library
+          <BookOpen /> Vocab Pokedex
         </NavLink>
         <NavLink to="/audio" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Headphones /> Audio Immersion

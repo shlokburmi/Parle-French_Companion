@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { playNativeAudio } from '../utils/audio';
 import { Play, Pause, RotateCcw, Volume2, Mic, Eye, EyeOff, Sparkles, ChevronLeft, Headphones, Award } from 'lucide-react';
 
 const episodes = [
@@ -45,7 +46,7 @@ const episodes = [
       { character: "Thomas", textFr: "Ah bon ? Pourquoi si tôt ? Tu commences le travail à quelle heure ?", textEn: "Oh really? Why so early? What time do you start work?" },
       { character: "Julie", textFr: "Je commence à huit heures, mais j'ai une heure et demie de transports en commun.", textEn: "I start at eight, but I have an hour and a half of public transportation." },
       { character: "Thomas", textFr: "C'est difficile. Tu devrais te détendre ce week-end. Qu'est-ce que tu as prévu ?", textEn: "That's hard. You should relax this weekend. What do you have planned?" },
-      { character: "Julie", textFr: "Je vais faire une grasse matinée samedi, puis me promener au parc du Luxembourg.", textEn: "I am going to sleep in on Saturday, then take a walk in the Luxembourg garden." }
+      { character: "Julie", textFr: "Je vais faire une grasse matinée samedi, puis me promener au parc du Luxembourg.", textEn: "Julie is going to sleep in on Saturday, then take a walk in the Luxembourg garden." }
     ]
   },
   {
@@ -78,15 +79,13 @@ export default function AudioScreen({ showToast }) {
   const [speechMatchScore, setSpeechMatchScore] = useState(null);
   const [evaluatingSpeech, setEvaluatingSpeech] = useState(false);
   
-  const synthRef = useRef(window.speechSynthesis);
   const scrollContainerRef = useRef(null);
-
   const { supported, isRecording, transcript, error, startListening, stopListening } = useSpeechRecognition();
 
   // Reset state when changing episodes
   useEffect(() => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
     }
     setIsPlaying(false);
     setCurrentLine(0);
@@ -148,30 +147,12 @@ export default function AudioScreen({ showToast }) {
 
   // Speak a single line
   const speakLine = (text, onEndCallback) => {
-    if (!synthRef.current) return;
-    synthRef.current.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'fr-FR';
-    utterance.rate = speed;
-
-    const voices = synthRef.current.getVoices();
-    const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
-    if (frenchVoice) {
-      utterance.voice = frenchVoice;
-    }
-
-    if (onEndCallback) {
-      utterance.onend = onEndCallback;
-    } else {
-      utterance.onend = () => {};
-    }
-
-    utterance.onerror = () => {
+    playNativeAudio(text, speed).then(() => {
+      if (onEndCallback) onEndCallback();
+    }).catch(err => {
+      console.error('[Audio play error]', err);
       setIsPlaying(false);
-    };
-
-    synthRef.current.speak(utterance);
+    });
   };
 
   // Autoplay loop through the dialogue lines
@@ -203,14 +184,16 @@ export default function AudioScreen({ showToast }) {
     runLoop();
     
     return () => {
-      if (synthRef.current) synthRef.current.cancel();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, currentLine, selectedEp, speed]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      if (synthRef.current) synthRef.current.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
@@ -218,7 +201,7 @@ export default function AudioScreen({ showToast }) {
   };
 
   const handleReset = () => {
-    if (synthRef.current) synthRef.current.cancel();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setIsPlaying(false);
     setCurrentLine(0);
   };
@@ -231,7 +214,7 @@ export default function AudioScreen({ showToast }) {
   };
 
   const handleStartPractice = (idx) => {
-    if (synthRef.current) synthRef.current.cancel();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setIsPlaying(false);
     setPracticeLineIdx(idx);
     setSpeechMatchScore(null);

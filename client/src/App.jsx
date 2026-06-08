@@ -9,6 +9,7 @@ import SessionSummary from './screens/SessionSummary';
 import Progress from './screens/Progress';
 import Grammar from './screens/Grammar';
 import Audio from './screens/Audio';
+import AIChat from './screens/AIChat';
 
 export default function App() {
   const { toasts, showToast } = useToast();
@@ -132,6 +133,7 @@ export default function App() {
           <div className="main-content" style={{ padding: 0 }}>
             <Routes>
               <Route path="/" element={<HomeAppFlow />} />
+              <Route path="/chat" element={<AIChat showToast={showToast} />} />
               <Route path="/progress" element={<Progress showToast={showToast} />} />
               <Route path="/grammar" element={<Grammar showToast={showToast} />} />
               <Route path="/audio" element={<Audio showToast={showToast} />} />

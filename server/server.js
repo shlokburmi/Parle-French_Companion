@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import geminiRoutes from './routes/api.js';
 import authRoutes from './routes/auth.js';
 import sessionsRoutes from './routes/sessions.js';
+import wordsRoutes from './routes/words.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +32,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', geminiRoutes);
 app.use('/api/sessions', sessionsRoutes);
+app.use('/api/words', wordsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

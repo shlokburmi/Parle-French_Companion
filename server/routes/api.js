@@ -260,4 +260,113 @@ Rules:
   }
 });
 
+/* =====================================================
+   POST /api/ai/chat-reply
+   Body: { chatLog: Array<{ sender: string, text: string }>, topic: string }
+   Returns: AI Tutor's conversational response in French
+===================================================== */
+router.post('/chat-reply', async (req, res) => {
+  try {
+    const { chatLog, topic } = req.body;
+    if (!chatLog || !Array.isArray(chatLog)) {
+      return res.status(400).json({ error: 'chatLog array is required' });
+    }
+
+    const formattedLog = chatLog.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n');
+
+    const prompt = `
+You are a friendly, encouraging native French language tutor.
+The user has chosen the topic: "${topic || 'General Conversation'}".
+
+Here is the conversation history so far:
+${formattedLog}
+
+Generate the NEXT response from the AI French Tutor.
+Guidelines:
+1. Respond in French.
+2. Keep your response natural, conversational, and relatively short (1 to 3 sentences max) so it is easy to listen to.
+3. Keep the conversation going by asking a follow-up question related to what the user said.
+4. Respond ONLY with the text of your reply. Do not add explanations, notes, translations, or markdown.
+`;
+
+    const reply = await callAI(prompt);
+    res.json({ reply: reply.trim() });
+  } catch (err) {
+    console.error('[chat-reply]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* =====================================================
+   POST /api/ai/evaluate-chat
+   Body: { chatLog: Array<{ sender: string, text: string }> }
+   Returns: Fluency evaluation metrics & spelling corrections
+===================================================== */
+router.post('/evaluate-chat', async (req, res) => {
+  try {
+    const { chatLog } = req.body;
+    if (!chatLog || !Array.isArray(chatLog)) {
+      return res.status(400).json({
+        error: 'chatLog array is required'
+      });
+    }
+
+    const formattedLog = chatLog.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n');
+
+    const prompt = `
+You are a French language fluency evaluator.
+Analyze the following conversation between a French AI Tutor (AI) and a French learner (USER):
+
+${formattedLog}
+
+Evaluate the USER's French response entries on the following aspects:
+1. Fluency (how natural their sentences are, phrasing)
+2. Vocabulary (word choices, richness)
+3. Grammar (syntax, spelling, gender agreement, verb conjugations)
+
+Identify any grammatical errors, spelling mistakes, or awkward phrasing the USER made. Provide clear corrections.
+
+Respond ONLY with a valid JSON object matching this schema:
+{
+  "fluencyScore": 80,
+  "vocabularyScore": 75,
+  "grammarScore": 70,
+  "pronunciationScore": 78,
+  "feedback": "Encouraging evaluation feedback paragraph in English detailing their strengths and weaknesses in this dialogue.",
+  "corrections": [
+    {
+      "original": "The user's original wrong French sentence",
+      "corrected": "The corrected/natural French version",
+      "explanation": "Grammar correction details in English."
+    }
+  ],
+  "tip": "One key improvement tip for their future dialogues."
+}
+`;
+
+    const raw = await callAI(prompt);
+    
+    // Clean and parse
+    const cleanText = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    try {
+      const parsed = JSON.parse(cleanText);
+      res.json(parsed);
+    } catch (e) {
+      // JSON extraction fallback regex
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (match) {
+        res.json(JSON.parse(match[0]));
+      } else {
+        throw e;
+      }
+    }
+  } catch (err) {
+    console.error('[evaluate-chat]', err.message);
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
 export default router;

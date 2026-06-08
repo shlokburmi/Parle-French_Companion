@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import WordPill from '../components/WordPill';
+import { useApi } from '../hooks/useApi';
 
 const FALLBACK_WORDS = ['bonjour', 'merci', 'café', "aujourd'hui", 'livre', 'bonsoir', 'maison', 'école', 'jardin', 'fromage'];
 
 export default function ScanLearn({ onStartConversation, showToast }) {
+  const { callApi } = useApi(showToast);
   const [words, setWords] = useState([]);
   const [previewSrc, setPreviewSrc] = useState('');
   const [ocrProgress, setOcrProgress] = useState(-1);
@@ -84,6 +86,14 @@ export default function ScanLearn({ onStartConversation, showToast }) {
 
   const handleStart = () => {
     if (words.length === 0) return;
+    
+    // Save words to database portfolio in the background (fire-and-forget for instant transition)
+    const savedUser = localStorage.getItem('user');
+    const user = savedUser ? JSON.parse(savedUser) : null;
+    if (user?._id) {
+      callApi('/api/words/batch', { userId: user._id, words }).catch(console.error);
+    }
+    
     onStartConversation(words);
   };
 
