@@ -34,7 +34,16 @@ app.use('/api/sessions', sessionsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: {
+      has_mongodb: !!process.env.MONGODB_URI,
+      has_google_client_id: !!process.env.GOOGLE_CLIENT_ID,
+      has_jwt_secret: !!process.env.JWT_SECRET,
+      google_client_id_value: process.env.GOOGLE_CLIENT_ID ? (process.env.GOOGLE_CLIENT_ID.substring(0, 10) + '...') : null
+    }
+  });
 });
 
 // Start only if running locally (Vercel will import the app instead)
