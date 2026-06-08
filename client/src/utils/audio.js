@@ -14,10 +14,9 @@ export function playNativeAudio(text, speed = 1.0) {
       return;
     }
 
-    // Google Translate TTS URL (Wavenet high-quality French voice)
-    // client=tw-ob is the standard parameter used to fetch high quality audio
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=fr&client=tw-ob&q=${encodeURIComponent(text)}`;
-    const audio = new Audio(ttsUrl);
+    // Call the server-side TTS proxy to bypass browser CORS blocks and use ElevenLabs if configured
+    const proxyUrl = `/api/ai/tts?text=${encodeURIComponent(text)}`;
+    const audio = new Audio(proxyUrl);
     
     // Set playback speed
     audio.playbackRate = speed;

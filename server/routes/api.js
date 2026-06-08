@@ -369,4 +369,75 @@ Respond ONLY with a valid JSON object matching this schema:
   }
 });
 
+/* =====================================================
+   GET /api/ai/tts
+   Query: ?text=Bonjour
+   Returns: Audio stream (binary MP3 data)
+===================================================== */
+router.get('/tts', async (req, res) => {
+  try {
+    const { text } = req.query;
+    if (!text) {
+      return res.status(400).json({ error: 'text parameter is required' });
+    }
+
+    const elevenKey = process.env.ELEVENLABS_API_KEY;
+    const voiceId = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // Rachel (Female Multilingual)
+
+    // Check if key looks valid
+    if (elevenKey && elevenKey.trim() !== '' && !elevenKey.includes('your_')) {
+      try {
+        console.log(`[TTS] Requesting ElevenLabs audio for: "${text.substring(0, 15)}..."`);
+        const elRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': elevenKey.trim(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.75
+            }
+          })
+        });
+
+        if (elRes.ok) {
+          const buffer = await elRes.arrayBuffer();
+          res.setHeader('Content-Type', 'audio/mpeg');
+          return res.send(Buffer.from(buffer));
+        } else {
+          const errText = await elRes.text();
+          console.warn(`[TTS] ElevenLabs API failed (${elRes.status}): ${errText}. Falling back to Google TTS.`);
+        }
+      } catch (elErr) {
+        console.error('[TTS] ElevenLabs connection error. Falling back to Google TTS:', elErr.message);
+      }
+    }
+
+    // Google Translate TTS Fallback Proxy (server-to-server bypasses browser CORS hotlinking blocks)
+    console.log(`[TTS] Requesting Google Translate TTS for: "${text.substring(0, 15)}..."`);
+    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=fr&client=tw-ob&q=${encodeURIComponent(text)}`;
+    const googleRes = await fetch(googleUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (googleRes.ok) {
+      const buffer = await googleRes.arrayBuffer();
+      res.setHeader('Content-Type', 'audio/mpeg');
+      return res.send(Buffer.from(buffer));
+    } else {
+      const errText = await googleRes.text();
+      throw new Error(`Google TTS failed with status ${googleRes.status}: ${errText}`);
+    }
+  } catch (err) {
+    console.error('[TTS Proxy Error]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
