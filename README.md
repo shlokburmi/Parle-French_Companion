@@ -1,36 +1,36 @@
-# Parle — Your Immersive French Language Companion
+# Parlé — Your Immersive French Language Companion
 
-Welcome to **Parle**, an interactive, AI-powered ecosystem designed to help you master French by connecting classroom theory with real-world context. 
+Welcome to **Parlé**, an interactive, AI-powered ecosystem designed to help you master French by connecting classroom theory with real-world context. 
 
-Traditional language apps lock you into pre-scripted lessons and repetitive vocab lists. **Parle** changes the game by transforming the French you encounter in daily life—whether it's a restaurant menu, a page of a novel, or a Parisian street sign—into personalized, conversational learning sessions.
+Traditional language apps lock you into pre-scripted lessons and repetitive vocab lists. **Parlé** changes the game by transforming the French you encounter in daily life—whether it's a restaurant menu, a page of a novel, or a Parisian street sign—into personalized, conversational learning sessions.
 
 ---
 
-## 🎯 What is Parle All About?
+## 🎯 What is Parlé All About?
 
-At its core, Parle is built to bridge the gap between **passive vocabulary recognition** and **active speech production**. 
+At its core, Parlé is built to bridge the gap between **passive vocabulary recognition** and **active speech production**. 
 
 It works in a loop that mimics natural immersion:
 1. **Discover**: You encounter real French text in the wild.
-2. **Scan**: Parle's integrated optical character recognition (OCR) pulls the words directly from your photo.
+2. **Scan**: Parlé's integrated optical character recognition (OCR) pulls the words directly from your photo.
 3. **Engage**: The system builds a dynamic, contextual dialogue using the exact words you just scanned.
 4. **Speak**: You talk back using speech-to-text, receiving real-time suggestions, spelling alerts, and pronunciation corrections from an encouraging AI tutor.
 
 ---
 
-## 💡 How Parle Helps You Succeed
+## 💡 How Parlé Helps You Succeed
 
 ### 1. Contextual Learning (No More Rote Memorization)
 Instead of studying abstract lists of verbs, you study the vocabulary relevant to your immediate environment. By extracting words from real documents, your brain naturally links them to visual cues and real-world utility, leading to significantly higher long-term retention.
 
 ### 2. Low-Pressure Speaking Practice
-Many learners understand written or spoken French but freeze when they have to speak. Parle provides a safe, low-pressure sandbox where you can speak French naturally. The AI tutor evaluates your speech not just for simple correctness, but for natural phrasing and flow.
+Many learners understand written or spoken French but freeze when they have to speak. Parlé provides a safe, low-pressure sandbox where you can speak French naturally. The AI tutor evaluates your speech not just for simple correctness, but for natural phrasing and flow.
 
 ### 3. Immediate Speech Feedback
-Parle uses native speech recognition technology to listen to your voice and calculate a pronunciation match percentage. It highlights which words you got right and tells you where your speech might have sounded unclear, helping you build a authentic accent.
+Parlé uses native speech recognition technology to listen to your voice and calculate a pronunciation match percentage. It highlights which words you got right and tells you where your speech might have sounded unclear, helping you build a authentic accent.
 
 ### 4. Grammar and Phrasing Improvements
-Parle doesn't just grade you; it teaches you. After conversations, it presents clear side-by-side corrections of your mistakes (e.g., gender agreements, prepositions) with detailed explanations from your tutor.
+Parlé doesn't just grade you; it teaches you. After conversations, it presents clear side-by-side corrections of your mistakes (e.g., gender agreements, prepositions) with detailed explanations from your tutor.
 
 ### 5. Seamless Onboarding & Continuity
 Sign in securely with Google to immediately save your vocabulary bank, continue your daily learning streak, and view a detailed history of your speaking sessions.

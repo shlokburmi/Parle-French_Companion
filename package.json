@@ -2,7 +2,7 @@
   "name": "language-revise",
   "version": "1.0.0",
   "type": "module",
-  "description": "Parle — French Language Learning Companion (MERN Stack)",
+  "description": "Parlé — French Language Learning Companion",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",

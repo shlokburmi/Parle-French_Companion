@@ -52,7 +52,7 @@ app.get('/api/health', (_req, res) => {
 const start = async () => {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`✓ Parle server running on http://localhost:${PORT}`);
+    console.log(`✓ Parlé server running on http://localhost:${PORT}`);
   });
 };
 

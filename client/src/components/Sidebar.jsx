@@ -4,7 +4,7 @@ import { Home, TrendingUp, BookOpen, Headphones, Settings, LogOut, MessageSquare
 export default function Sidebar({ user, onLogout }) {
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">Parle</div>
+      <div className="sidebar-brand">Parlé</div>
 
       {user && (
         <div className="user-profile-sm">

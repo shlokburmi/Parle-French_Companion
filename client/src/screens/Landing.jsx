@@ -3,7 +3,7 @@ import { GoogleLogin } from '@react-oauth/google';
 export default function Landing({ onLoginSuccess, onLoginError }) {
   return (
     <div className="landing-wrap">
-      <h1>Parle</h1>
+      <h1>Parlé</h1>
       <p>Your French Companion. Scan real-world text, practice pronunciation, and track your fluency journey.</p>
       
       <div className="auth-card">

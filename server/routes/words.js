@@ -45,7 +45,7 @@ Each object in the array must match this schema exactly:
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'http://localhost:3000',
-      'X-Title': 'Parle French Tutor',
+      'X-Title': 'Parlé French Tutor',
     },
     body: JSON.stringify({
       model: 'openai/gpt-oss-120b:free',
