@@ -6,7 +6,9 @@ import Landing from './screens/Landing';
 import ScanLearn from './screens/ScanLearn';
 import Conversation from './screens/Conversation';
 import SessionSummary from './screens/SessionSummary';
-import Placeholders from './screens/Placeholders';
+import Progress from './screens/Progress';
+import Grammar from './screens/Grammar';
+import Audio from './screens/Audio';
 
 export default function App() {
   const { toasts, showToast } = useToast();
@@ -130,9 +132,9 @@ export default function App() {
           <div className="main-content" style={{ padding: 0 }}>
             <Routes>
               <Route path="/" element={<HomeAppFlow />} />
-              <Route path="/progress" element={<Placeholders title="My Progress" />} />
-              <Route path="/grammar" element={<Placeholders title="Grammar Library" />} />
-              <Route path="/audio" element={<Placeholders title="Audio Immersion" />} />
+              <Route path="/progress" element={<Progress showToast={showToast} />} />
+              <Route path="/grammar" element={<Grammar showToast={showToast} />} />
+              <Route path="/audio" element={<Audio showToast={showToast} />} />
             </Routes>
           </div>
         </div>
