@@ -110,10 +110,10 @@ export default function ScanLearn({ onStartConversation, showToast }) {
         Transform any real-world French text into an interactive lesson. Upload a menu, a page, or a sign.
       </p>
 
-      <div className="upload-modal" style={{ position: 'relative' }}>
+      <div className="upload-modal" style={{ position: 'relative', overflow: 'hidden' }}>
         {/* Background floating pills effect if we have words */}
         {words.length > 0 && (
-          <div style={{ position: 'absolute', inset: -80, zIndex: -1, pointerEvents: 'none', opacity: 0.5 }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: -1, pointerEvents: 'none', opacity: 0.5 }}>
             <div className="words-container" style={{ justifyContent: 'center' }}>
               {words.map((w, i) => (
                 <WordPill key={w + i} word={w} index={i} />
