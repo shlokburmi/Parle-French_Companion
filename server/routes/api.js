@@ -112,17 +112,22 @@ router.post('/generate', async (req, res) => {
       .slice(0, 3);
 
     const prompt = `
-You are a French language tutor.
+You are a French language tutor helping a beginner practice specific vocabulary.
 
-Create ONE natural French sentence suitable for an intermediate learner.
-
-Use one or more of these words:
+The student is practicing ONLY these words:
 ${selected.join(', ')}
+
+Rules:
+- Create ONE simple, short French sentence (5-10 words max).
+- You MUST use one or more of the provided words above. Do NOT use words outside basic French (je, tu, il, elle, nous, vous, est, suis, ai, le, la, les, un, une, de, et, avec, dans, pour, très, bien, oui, non, etc.) plus the provided words.
+- The sentence must be easy enough for a beginner to read and repeat.
+- Do NOT invent or include any word that is not in the provided list or basic French grammar words.
+- If a provided word looks misspelled or unrecognizable, skip it and use another one from the list.
 
 Respond ONLY with valid JSON:
 
 {
-  "sentence": "French sentence",
+  "sentence": "Simple French sentence using the provided words",
   "sentence_english": "English translation"
 }
 `;
@@ -190,7 +195,7 @@ router.post('/evaluate', async (req, res) => {
       .slice(0, 3);
 
     const prompt = `
-You are a French fluency evaluator.
+You are a French fluency evaluator helping a beginner practice specific vocabulary.
 
 The learner was asked to say:
 
@@ -204,13 +209,20 @@ The learner said:
 "${userText}"
 
 Evaluate:
-- pronunciation attempt
-- grammar
-- vocabulary match
-- overall fluency
+- How closely the learner's response matches the original sentence
+- Basic grammar
+- Vocabulary accuracy
 
-Then generate the next practice sentence using some of these words:
+Then generate the NEXT practice sentence.
+
+The student is practicing ONLY these words:
 ${nextWords.join(', ')}
+
+Rules for the next_sentence:
+- Create ONE simple, short French sentence (5-10 words max).
+- You MUST use one or more of the provided words. Do NOT use words outside basic French (je, tu, il, elle, nous, vous, est, suis, ai, le, la, les, un, une, de, et, avec, dans, pour, très, bien, oui, non, etc.) plus the provided words.
+- Keep it beginner-friendly and easy to repeat.
+- If a provided word looks misspelled or unrecognizable, skip it and use another one from the list.
 
 Respond ONLY with valid JSON:
 
@@ -218,7 +230,7 @@ Respond ONLY with valid JSON:
   "score": 75,
   "feedback": "Helpful encouraging feedback",
   "tip": "One improvement tip",
-  "next_sentence": "French sentence",
+  "next_sentence": "Simple French sentence using the provided words",
   "next_sentence_english": "English translation"
 }
 

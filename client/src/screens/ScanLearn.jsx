@@ -61,6 +61,30 @@ export default function ScanLearn({ onStartConversation, showToast }) {
       setOcrProgress(100);
       setOcrStatus('');
 
+      // Common French words to validate OCR output against
+      const COMMON_FRENCH = new Set([
+        'bonjour', 'bonsoir', 'salut', 'merci', 'beaucoup', 'oui', 'non',
+        'bien', 'très', 'tres', 'aussi', 'avec', 'pour', 'dans', 'sur',
+        'mais', 'donc', 'car', 'comme', 'quand', 'comment', 'pourquoi',
+        'demain', 'aujourd', "aujourd'hui", 'hier', 'maintenant', 'bientôt', 'bientot',
+        'toujours', 'jamais', 'souvent', 'parfois', 'encore', 'déjà', 'deja',
+        'jour', 'journée', 'journee', 'soir', 'soirée', 'soiree', 'matin', 'nuit',
+        'bon', 'bonne', 'beau', 'belle', 'petit', 'petite', 'grand', 'grande',
+        'maison', 'école', 'ecole', 'livre', 'café', 'cafe', 'eau', 'pain',
+        'fromage', 'jardin', 'ville', 'rue', 'ami', 'amie', 'famille', 'enfant',
+        'homme', 'femme', 'fille', 'garçon', 'garcon', 'chat', 'chien',
+        'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
+        'suis', 'est', 'sont', 'avons', 'avez', 'ont', 'ai', 'as',
+        'aime', 'mange', 'parle', 'fait', 'vais', 'veux', 'peux', 'dois',
+        'aller', 'manger', 'parler', 'faire', 'voir', 'avoir', 'être', 'etre',
+        'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de',
+        'ce', 'cette', 'ces', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
+        'revoir', 'bienvenue', 'excusez', 'pardon', 'merci', 'plait', "s'il",
+        'rouge', 'bleu', 'vert', 'blanc', 'noir', 'rose',
+        'lire', 'écrire', 'ecrire', 'apprendre', 'comprendre', 'savoir',
+        'content', 'contente', 'heureux', 'heureuse', 'triste', 'fatigué', 'fatigue',
+      ]);
+
       const raw = text
         .replace(/[^a-zA-ZÀ-ÿ\s'-]/g, ' ')
         .split(/\s+/)
@@ -69,11 +93,23 @@ export default function ScanLearn({ onStartConversation, showToast }) {
 
       const unique = [...new Set(raw)];
 
-      if (unique.length < 3) {
-        showToast('Few words detected — using sample French vocabulary.');
+      // Filter: keep words that are recognized French words or close matches
+      const filtered = unique.filter((w) => {
+        // Direct match
+        if (COMMON_FRENCH.has(w)) return true;
+        // Check if it's part of a known compound (e.g., "aujourd" from "aujourd'hui")
+        for (const known of COMMON_FRENCH) {
+          if (known.startsWith(w) && w.length >= 4) return true;
+          if (w.startsWith(known) && known.length >= 4) return true;
+        }
+        return false;
+      });
+
+      if (filtered.length < 3) {
+        showToast('Few recognizable words — using sample French vocabulary.');
         processWords(FALLBACK_WORDS);
       } else {
-        processWords(unique.slice(0, 20));
+        processWords(filtered.slice(0, 20));
       }
     } catch (err) {
       console.error('OCR error:', err);
