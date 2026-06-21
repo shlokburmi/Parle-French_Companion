@@ -1,14 +1,25 @@
 import { useState, useRef, useCallback } from 'react';
+import { createWorker } from 'tesseract.js';
 import WordPill from '../components/WordPill';
 import { useApi } from '../hooks/useApi';
 
 const FALLBACK_WORDS = ['bonjour', 'merci', 'café', "aujourd'hui", 'livre', 'bonsoir', 'maison', 'école', 'jardin', 'fromage'];
+
+const STATUS_LABELS = {
+  'loading tesseract core': 'Loading OCR engine',
+  'initializing tesseract': 'Initializing',
+  'loading language traineddata': 'Downloading French language data',
+  'loaded language traineddata': 'Language data loaded',
+  'initializing api': 'Preparing OCR',
+  'recognizing text': 'Scanning text',
+};
 
 export default function ScanLearn({ onStartConversation, showToast }) {
   const { callApi } = useApi(showToast);
   const [words, setWords] = useState([]);
   const [previewSrc, setPreviewSrc] = useState('');
   const [ocrProgress, setOcrProgress] = useState(-1);
+  const [ocrStatus, setOcrStatus] = useState('');
   const [ready, setReady] = useState(false);
   const fileRef = useRef(null);
   const [dragover, setDragover] = useState(false);
@@ -29,23 +40,16 @@ export default function ScanLearn({ onStartConversation, showToast }) {
     reader.readAsDataURL(file);
 
     setOcrProgress(0);
+    setOcrStatus('Loading OCR engine');
     setWords([]);
     setReady(false);
 
     try {
-      if (!window.Tesseract) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      const worker = await window.Tesseract.createWorker('fra', 1, {
+      const worker = await createWorker('fra', 1, {
         logger: (m) => {
-          if (m.status === 'recognizing text') {
+          const label = STATUS_LABELS[m.status] || m.status;
+          setOcrStatus(label);
+          if (m.progress != null) {
             setOcrProgress(Math.round(m.progress * 100));
           }
         },
@@ -55,6 +59,7 @@ export default function ScanLearn({ onStartConversation, showToast }) {
       await worker.terminate();
 
       setOcrProgress(100);
+      setOcrStatus('');
 
       const raw = text
         .replace(/[^a-zA-ZÀ-ÿ\s'-]/g, ' ')
@@ -74,6 +79,7 @@ export default function ScanLearn({ onStartConversation, showToast }) {
       console.error('OCR error:', err);
       showToast('OCR failed — using sample vocabulary.');
       setOcrProgress(100);
+      setOcrStatus('');
       processWords(FALLBACK_WORDS);
     }
   }, [showToast, processWords]);
@@ -158,7 +164,7 @@ export default function ScanLearn({ onStartConversation, showToast }) {
 
       {ocrProgress >= 0 && ocrProgress < 100 && (
         <div style={{ textAlign: 'center', marginTop: '24px' }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>Scanning with Tesseract... {ocrProgress}%</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>{ocrStatus || 'Preparing'}... {ocrProgress}%</p>
         </div>
       )}
 
