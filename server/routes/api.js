@@ -273,6 +273,116 @@ Rules:
 });
 
 /* =====================================================
+   POST /api/ai/evaluate-session
+   Body: { rounds: Array<{ sentence, sentenceEn, userText }> }
+
+   Evaluates ALL rounds at once and returns comprehensive scores.
+   Returns:
+   {
+     overallScore,
+     pronunciationScore,
+     grammarScore,
+     vocabularyScore,
+     fluencyScore,
+     strengths: string[],
+     weaknesses: string[],
+     tips: string[],
+     rounds: Array<{ score, feedback }>
+   }
+===================================================== */
+router.post('/evaluate-session', async (req, res) => {
+  try {
+    const { rounds } = req.body;
+
+    if (!rounds?.length) {
+      return res.status(400).json({
+        error: 'rounds array is required',
+      });
+    }
+
+    const roundsSummary = rounds
+      .map(
+        (r, i) =>
+          `Round ${i + 1}:\n  Expected: "${r.sentence}" (${r.sentenceEn})\n  User said: "${r.userText}"`
+      )
+      .join('\n\n');
+
+    const prompt = `
+You are a French language fluency evaluator. A beginner learner just completed a pronunciation practice session with ${rounds.length} rounds.
+
+Here is what happened in each round:
+
+${roundsSummary}
+
+Evaluate the learner's overall performance across ALL rounds.
+
+Score each category from 0 to 100:
+1. Pronunciation — How closely did the user's spoken words match the expected French sentences?
+2. Grammar — Did the user use correct grammar and word order?
+3. Vocabulary — Did the user use the correct vocabulary words?
+4. Fluency — How natural and fluid was the user's speech overall?
+
+Also provide:
+- An overall score (average of the 4 categories)
+- 2-3 specific strengths the learner showed
+- 2-3 specific weaknesses or areas to improve
+- 2-3 actionable tips for improvement
+- A brief per-round feedback (1 sentence each)
+
+Respond ONLY with valid JSON:
+
+{
+  "overallScore": 72,
+  "pronunciationScore": 70,
+  "grammarScore": 75,
+  "vocabularyScore": 80,
+  "fluencyScore": 65,
+  "strengths": ["Strength 1", "Strength 2"],
+  "weaknesses": ["Weakness 1", "Weakness 2"],
+  "tips": ["Tip 1", "Tip 2"],
+  "rounds": [
+    { "score": 75, "feedback": "Brief feedback for round 1" },
+    { "score": 80, "feedback": "Brief feedback for round 2" }
+  ]
+}
+
+Rules:
+- All scores must be between 0 and 100
+- Be encouraging but honest
+- If the user's text is empty or "...", give a low score for that round
+- Feedback should be in English
+- valid JSON only
+`;
+
+    const raw = await callAI(prompt);
+    const parsed = extractJSON(raw);
+
+    if (parsed && typeof parsed.overallScore === 'number') {
+      return res.json(parsed);
+    }
+
+    // Fallback
+    return res.json({
+      overallScore: 60,
+      pronunciationScore: 55,
+      grammarScore: 65,
+      vocabularyScore: 70,
+      fluencyScore: 50,
+      strengths: ['Good attempt at speaking French', 'Willingness to practice'],
+      weaknesses: ['Pronunciation needs work', 'Try to match the sentence more closely'],
+      tips: ['Practice each word individually before full sentences', 'Listen to native speakers for pronunciation patterns'],
+      rounds: rounds.map(() => ({ score: 60, feedback: 'Keep practicing!' })),
+    });
+  } catch (err) {
+    console.error('[evaluate-session]', err.message);
+
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
+/* =====================================================
    POST /api/ai/chat-reply
    Body: { chatLog: Array<{ sender: string, text: string }>, topic: string }
    Returns: AI Tutor's conversational response in French

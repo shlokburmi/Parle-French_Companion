@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApi } from '../hooks/useApi';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { Mic } from 'lucide-react';
-import FeedbackCard from '../components/FeedbackCard';
+import { Mic, CheckCircle } from 'lucide-react';
 
 const TOTAL_ROUNDS = 5;
 
@@ -13,37 +12,65 @@ export default function Conversation({ words, showToast, onComplete }) {
   const [round, setRound] = useState(1);
   const [sentenceFr, setSentenceFr] = useState('');
   const [sentenceEn, setSentenceEn] = useState('');
-  const [userText, setUserText] = useState('');
-  const [feedback, setFeedback] = useState(null);
   const [results, setResults] = useState([]);
-  const [textInput, setTextInput] = useState('');
-  const [showTextFallback, setShowTextFallback] = useState(!supported);
-  const [evaluating, setEvaluating] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [lastTranscript, setLastTranscript] = useState('');
+  const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
     generateSentence();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // When transcript is received, show confirmation briefly then advance
   useEffect(() => {
-    if (transcript && !evaluating && !feedback) {
-      setUserText(transcript);
-      evaluateResponse(transcript);
+    if (transcript && !transitioning) {
+      setLastTranscript(transcript);
+      setShowConfirm(true);
+
+      // Record this round's data
+      const roundData = {
+        round,
+        sentence: sentenceFr,
+        sentenceEn,
+        userText: transcript,
+      };
+
+      setResults((prev) => {
+        const updated = [...prev, roundData];
+
+        // Check if this was the last round
+        if (round >= TOTAL_ROUNDS) {
+          // Small delay for UX, then complete
+          setTimeout(() => {
+            onComplete(updated);
+          }, 1200);
+        } else {
+          // Auto-advance to next round after brief confirmation
+          setTransitioning(true);
+          setTimeout(() => {
+            setRound((r) => r + 1);
+            setShowConfirm(false);
+            setLastTranscript('');
+            resetTranscript();
+            setTransitioning(false);
+            generateNextSentence();
+          }, 1500);
+        }
+
+        return updated;
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
 
   useEffect(() => {
     if (error) {
-      setShowTextFallback(true);
+      showToast('Microphone error — please try again.');
     }
-  }, [error]);
+  }, [error, showToast]);
 
   const generateSentence = useCallback(async () => {
-    setFeedback(null);
-    setUserText('');
-    resetTranscript();
-
     const data = await callApi('/api/ai/generate', { words });
 
     if (data) {
@@ -54,75 +81,33 @@ export default function Conversation({ words, showToast, onComplete }) {
       setSentenceFr(`Bonjour, j'aime ${w}.`);
       setSentenceEn(`Hello, I like ${w}.`);
     }
-  }, [words, callApi, resetTranscript]);
+  }, [words, callApi]);
 
-  const evaluateResponse = useCallback(async (text) => {
-    setEvaluating(true);
-    const data = await callApi('/api/ai/evaluate', {
-      sentence: sentenceFr,
-      sentenceEn: sentenceEn,
-      userText: text,
-      words,
-    });
+  const generateNextSentence = useCallback(async () => {
+    const data = await callApi('/api/ai/generate', { words });
 
     if (data) {
-      setFeedback(data);
-      setResults((prev) => [...prev, {
-        sentence: sentenceFr,
-        sentenceEn,
-        userText: text,
-        score: data.score,
-        feedback: data.feedback,
-        tip: data.tip,
-        isPerfect: data.score > 85
-      }]);
-
-      if (data.next_sentence) {
-        setSentenceFr(data.next_sentence);
-        setSentenceEn(data.next_sentence_english || '');
-      }
+      setSentenceFr(data.sentence);
+      setSentenceEn(data.sentence_english || '');
     } else {
-      setFeedback({
-        score: 50,
-        feedback: 'Could not evaluate — please try again.',
-        tip: 'Check your internet connection.',
-      });
+      const w = words[Math.floor(Math.random() * words.length)];
+      setSentenceFr(`Je vais bien avec ${w}.`);
+      setSentenceEn(`I'm doing well with ${w}.`);
     }
-    setEvaluating(false);
-  }, [sentenceFr, sentenceEn, words, callApi]);
+  }, [words, callApi]);
 
   const handleMicClick = () => {
     if (isRecording) {
       stopListening();
     } else {
       startListening();
-      setShowTextFallback(false);
-    }
-  };
-
-  const handleTextSubmit = () => {
-    const val = textInput.trim();
-    if (!val) return;
-    setUserText(val);
-    setTextInput('');
-    evaluateResponse(val);
-  };
-
-  const handleNext = () => {
-    if (round >= TOTAL_ROUNDS) {
-      onComplete(results);
-    } else {
-      setRound((r) => r + 1);
-      setFeedback(null);
-      setUserText('');
-      resetTranscript();
     }
   };
 
   const micLabel = isRecording
     ? 'Listening…'
-    : evaluating
-      ? 'Processing…'
+    : showConfirm
+      ? 'Recorded!'
       : 'Tap to speak';
 
   return (
@@ -131,20 +116,66 @@ export default function Conversation({ words, showToast, onComplete }) {
         Round {round}/{TOTAL_ROUNDS}
       </div>
 
+      {/* Progress dots */}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '16px 0 32px' }}>
+        {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: i < results.length
+                ? 'var(--gold)'
+                : i === round - 1
+                  ? 'rgba(201,168,76,0.4)'
+                  : 'rgba(240,230,200,0.1)',
+              transition: 'all 0.3s ease',
+              transform: i === round - 1 ? 'scale(1.3)' : 'scale(1)',
+            }}
+          />
+        ))}
+      </div>
+
       <div className="sentence-display">
         {loading && !sentenceFr ? (
           <div className="loading-text"><span className="spinner" /> Generating sentence…</div>
         ) : (
           <>
-            <h1 className="sentence-fr">{sentenceFr}</h1>
+            <h1 className="sentence-fr" style={{ opacity: showConfirm ? 0.4 : 1, transition: 'opacity 0.3s' }}>
+              {sentenceFr}
+            </h1>
             <p className="sentence-en">"{sentenceEn}"</p>
           </>
         )}
       </div>
 
-      {!feedback && !evaluating && supported && (
+      {/* Confirmation overlay after speaking */}
+      {showConfirm && (
+        <div style={{
+          marginTop: '32px',
+          padding: '16px 24px',
+          background: 'rgba(76, 175, 80, 0.1)',
+          border: '1px solid rgba(76, 175, 80, 0.3)',
+          borderRadius: '12px',
+          maxWidth: '400px',
+          margin: '32px auto 0',
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
+            <CheckCircle size={18} style={{ color: '#4CAF50' }} />
+            <span style={{ color: '#4CAF50', fontSize: '0.85rem', fontWeight: 600 }}>Response recorded</span>
+          </div>
+          <p style={{ color: 'var(--cream)', fontSize: '0.95rem', fontStyle: 'italic', margin: 0 }}>
+            "{lastTranscript}"
+          </p>
+        </div>
+      )}
+
+      {/* Mic button - only show when not in transition and not showing confirm */}
+      {!showConfirm && !transitioning && supported && (
         <div style={{ marginTop: '64px' }}>
-          {/* Audio Bars Mockup */}
+          {/* Audio Bars */}
           <div className="audio-bars">
             <div className="bar" style={{ animationDelay: '0.1s' }}></div>
             <div className="bar" style={{ animationDelay: '0.4s', height: '15px' }}></div>
@@ -162,30 +193,20 @@ export default function Conversation({ words, showToast, onComplete }) {
         </div>
       )}
 
-      {showTextFallback && !feedback && !evaluating && (
-        <div style={{ marginTop: '24px', maxWidth: '400px', margin: '24px auto 0' }}>
-          <input
-            type="text"
-            style={{ width: '100%', padding: '16px', borderRadius: '8px', background: 'var(--card)', border: '1px solid rgba(240,230,200,0.1)', color: 'var(--cream)', fontFamily: 'var(--sans)', fontSize: '1rem' }}
-            placeholder="Type your French response…"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleTextSubmit()}
-          />
+      {/* No speech recognition support message */}
+      {!supported && (
+        <div style={{ marginTop: '40px', padding: '20px', background: 'rgba(217,64,64,0.1)', borderRadius: '12px', maxWidth: '400px', margin: '40px auto 0' }}>
+          <p style={{ color: 'var(--red)', fontSize: '0.9rem', margin: 0 }}>
+            🎤 Your browser doesn't support speech recognition. Please use Chrome or Edge for the best experience.
+          </p>
         </div>
       )}
 
-      {evaluating && (
-        <div className="loading-text" style={{ marginTop: '40px' }}><span className="spinner" /> Evaluating your pronunciation…</div>
-      )}
-
-      {feedback && !evaluating && (
-        <div style={{ maxWidth: '480px', margin: '40px auto 0', textAlign: 'left' }}>
-          <FeedbackCard score={feedback.score} feedback={feedback.feedback} tip={feedback.tip} />
-          <button className="btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '24px' }}>
-            {round >= TOTAL_ROUNDS ? 'View Session Summary' : 'Continue'}
-          </button>
-        </div>
+      {/* Subtle instruction */}
+      {!showConfirm && !transitioning && !isRecording && sentenceFr && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '40px', opacity: 0.6 }}>
+          Read the French sentence aloud — your pronunciation will be evaluated after all {TOTAL_ROUNDS} rounds.
+        </p>
       )}
     </div>
   );
