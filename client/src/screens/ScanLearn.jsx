@@ -36,7 +36,7 @@ export default function ScanLearn({ onStartConversation, showToast }) {
       if (!window.Tesseract) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js';
+          script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
           script.onload = resolve;
           script.onerror = reject;
           document.head.appendChild(script);
